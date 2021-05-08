@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { User, Post, Vote } = require('../../models');
+const { User, Post, Vote, Comment } = require('../../models');
 
 // NOTE: THESE ENDPOINTS ARE SPECIFICALLY FOR THE /api/users URL
 
@@ -27,6 +27,14 @@ router.get('/:id', (req, res) => {
       {
         model: Post,
         attributes: ['id', 'title', 'post_url', 'created_at']
+      },
+      {
+        model: Comment,
+        attributes: ['id', 'comment_text', 'user_id', 'post_id', 'created_at'],
+        include: {
+          model: Post,
+          attributes: ['title']
+        }
       },
       {
         model: Post,
