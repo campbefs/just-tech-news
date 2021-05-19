@@ -1,14 +1,21 @@
 const router = require('express').Router();
 const sequelize = require('../config/connection');
 const { Post, User, Comment } = require('../models');
+const withAuth = require('../utils/auth');
 
-router.get('/', (req, res) => {
-  console.log('mysession:', req.session);
+router.get('/', withAuth, (req, res) => {
+
   Post.findAll({
+    where: {
+      // use the ID from the session
+      user_id: req.session.user_id
+    },
     attributes: [
-      'id', 'post_url', 'title', 'created_at',
-      [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'),
-      'vote_count']
+      'id',
+      'post_url',
+      'title',
+      'created_at',
+      [ sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']
     ],
     include: [
       {
@@ -26,42 +33,17 @@ router.get('/', (req, res) => {
     ]
   })
     .then(dbPostData => {
-      // pass a single post object into the homepage template
-      // console.log(dbPostData[0].get({ plain: true }));
+      // serialize data before passing to template
       const posts = dbPostData.map(post => post.get({ plain: true }));
-
-      res.render('homepage', { 
-        posts,
-        loggedIn: req.session.loggedIn
-      });
+      res.render('dashboard', { posts, loggedIn: true });
     })
     .catch(err => {
       console.log(err);
       res.status(500).json(err);
-    })
+    });
 });
 
-router.get('/login', (req, res) => {
-  res.render('login');
-});
-
-router.get('/post/:id', (req, res) => {
-  //// TEST POST
-  // const post = {
-  //   id: 1,
-  //   post_url: 'https://handlebarsjs.com/guide/',
-  //   title: 'Handlebars Docs',
-  //   created_at: new Date(),
-  //   vote_count: 10,
-  //   comments: [{}, {}],
-  //   user: {
-  //     username: 'test_user'
-  //   }
-  // };
-  // res.render('single-post', { post });
-  
-
-
+router.get('/edit/:id', withAuth, (req, res) => {
   Post.findOne({
     where: {
       id: req.params.id
@@ -99,13 +81,12 @@ router.get('/post/:id', (req, res) => {
       const post = dbPostData.get({ plain: true });
 
       // pass data to template
-      res.render('single-post', { post, loggedIn: req.session.loggedIn });
+      res.render('edit-post', { post, loggedIn: req.session.loggedIn });
     })
       .catch(err => {
         console.log(err);
         res.status(500).json(err);
       });
-
 })
 
 module.exports = router;
