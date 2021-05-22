@@ -12,6 +12,7 @@ Post.belongsTo(User, {
   foreignKey: 'user_id',
 });
 
+// Start Vote
 User.belongsToMany(Post, {
   through: Vote,
   as: 'voted_posts',
@@ -39,6 +40,7 @@ User.hasMany(Vote, {
 Post.hasMany(Vote, {
   foreignKey: 'post_id'
 });
+// end VOTE
 
 Comment.belongsTo(User, {
   foreignKey: 'user_id'
